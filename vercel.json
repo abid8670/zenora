@@ -1,14 +1,32 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.php": {
-      "runtime": "vercel-php@0.6.0"
+  "builds": [
+    {
+      "src": "api/index.php",
+      "use": "vercel-php@0.7.0"
+    },
+    {
+      "src": "public/index.php",
+      "use": "@vercel/static"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/index.php"
+      "dest": "/api/index.php"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.php": {
+      "runtime": "vercel-php@0.7.0",
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "APP_ENV": "production",
+    "APP_DEBUG": "false",
+    "APP_URL": "https://your-app-name.vercel.app",
+    "LOG_CHANNEL": "stderr"
+  }
 }
