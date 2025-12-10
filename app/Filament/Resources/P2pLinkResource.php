@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\P2pLinkResource\Pages;
 use App\Models\P2pLink;
-use App\Models\Office;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
@@ -36,22 +35,24 @@ class P2pLinkResource extends Resource
                         ->icon('heroicon-o-link')
                         ->schema([
                             Section::make()
-                                ->columns(2)
+                                ->columns(3)
                                 ->schema([
                                     TextInput::make('name')
                                         ->required()
                                         ->label('Link / VPN Name')
                                         ->placeholder('e.g., HO to KHI Branch VPN')
                                         ->columnSpanFull(),
+
                                     Select::make('link_type')
                                         ->options([
                                             'P2P Radio Link' => 'P2P Radio Link',
+                                            'Fiber Optic Link' => 'Fiber Optic Link',
                                             'Site-to-Site VPN' => 'Site-to-Site VPN',
                                             'MPLS' => 'MPLS',
                                             'Other' => 'Other',
                                         ])
-                                        ->required()
-                                        ->reactive(),
+                                        ->required(),
+
                                     Select::make('status')
                                         ->options([
                                             'Active' => 'Active',
@@ -60,57 +61,63 @@ class P2pLinkResource extends Resource
                                         ])
                                         ->required()
                                         ->default('Active'),
+                                    
+                                    TextInput::make('link_speed')
+                                        ->label('Link Speed')
+                                        ->suffix('Mbps')
+                                        ->numeric(),
+
+                                    Select::make('ownership')
+                                        ->options([
+                                            'Owned' => 'Owned',
+                                            'Rented' => 'Rented',
+                                        ]),
+
                                     Select::make('office_a_id')
-                                        ->label('Office A')
-                                        ->options(Office::all()->pluck('name', 'id'))
+                                        ->label('Office A (From)')
+                                        ->relationship('officeA', 'name', fn (Builder $query) => $query->with('site'))
+                                        ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name}" . ($record->site ? " ({$record->site->name})" : ''))
                                         ->searchable()
-                                        ->required(),
+                                        ->required()
+                                        ->columnSpan(2),
+
                                     Select::make('office_b_id')
-                                        ->label('Office B')
-                                        ->options(Office::all()->pluck('name', 'id'))
+                                        ->label('Office B (To)')
+                                        ->relationship('officeB', 'name', fn (Builder $query) => $query->with('site'))
+                                        ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name}" . ($record->site ? " ({$record->site->name})" : ''))
                                         ->searchable()
-                                        ->required(),
+                                        ->required()
+                                        ->columnSpan(2),
                                 ]),
                         ]),
 
-                    Tabs\Tab::make('Device / Server Access')
+                    Tabs\Tab::make('Device A Details')
                         ->icon('heroicon-o-server')
                         ->schema([
-                            Section::make('Management Access')
-                                ->description('Credentials to access the radio link device or main VPN server.')
+                            Section::make('Device/Point A')
                                 ->columns(3)
                                 ->schema([
-                                    TextInput::make('device_url')
-                                        ->label('Management URL / Server Address')
-                                        ->placeholder('e.g., 192.168.1.1 or vpn.example.com'),
-                                    TextInput::make('username')
-                                        ->label('Username'),
-                                    TextInput::make('password')
-                                        ->label('Password')
-                                        ->password()
-                                        ->revealable()
-                                        ->autocomplete('new-password'),
+                                    TextInput::make('device_a_type')->label('Device Type')->placeholder('e.g., PowerBeam M5'),
+                                    Select::make('device_a_mode')->options(['Access Point' => 'Access Point', 'Station' => 'Station', 'Bridge' => 'Bridge', 'Router' => 'Router'])->label('Device Mode'),
+                                    TextInput::make('device_a_wan_ip')->label('WAN IP')->ip(),
+                                    TextInput::make('device_a_url')->label('Management URL'),
+                                    TextInput::make('device_a_username')->label('Username'),
+                                    TextInput::make('device_a_password')->label('Password')->password()->revealable()->autocomplete('new-password'),
                                 ]),
                         ]),
-
-                    Tabs\Tab::make('VPN Client Credentials')
-                        ->icon('heroicon-o-user')
-                        ->visible(fn ($get) => $get('link_type') === 'Site-to-Site VPN')
+                    
+                    Tabs\Tab::make('Device B Details')
+                        ->icon('heroicon-o-server')
                         ->schema([
-                            Section::make('VPN Client Details')
-                                ->description('Credentials for the VPN client user, if applicable.')
+                            Section::make('Device/Point B')
                                 ->columns(3)
                                 ->schema([
-                                    TextInput::make('vpn_server_ip')
-                                        ->label('VPN Server IP')
-                                        ->ip(),
-                                    TextInput::make('vpn_user')
-                                        ->label('VPN Username'),
-                                    TextInput::make('vpn_password')
-                                        ->label('VPN Password')
-                                        ->password()
-                                        ->revealable()
-                                        ->autocomplete('new-password'),
+                                    TextInput::make('device_b_type')->label('Device Type')->placeholder('e.g., MikroTik SXT'),
+                                    Select::make('device_b_mode')->options(['Access Point' => 'Access Point', 'Station' => 'Station', 'Bridge' => 'Bridge', 'Router' => 'Router'])->label('Device Mode'),
+                                    TextInput::make('device_b_wan_ip')->label('WAN IP')->ip(),
+                                    TextInput::make('device_b_url')->label('Management URL'),
+                                    TextInput::make('device_b_username')->label('Username'),
+                                    TextInput::make('device_b_password')->label('Password')->password()->revealable()->autocomplete('new-password'),
                                 ]),
                         ]),
 
@@ -132,39 +139,24 @@ class P2pLinkResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('link_type')
-                    ->label('Type')
-                    ->searchable(),
-                BadgeColumn::make('status')
-                    ->colors([
-                        'success' => 'Active',
-                        'danger' => 'Inactive',
-                        'warning' => 'Maintenance',
-                    ]),
-                TextColumn::make('officeA.name')
-                    ->label('From Office')
-                    ->searchable(),
-                TextColumn::make('officeB.name')
-                    ->label('To Office')
-                    ->searchable(),
+                TextColumn::make('name')->searchable()->sortable(),
+                TextColumn::make('link_type')->label('Type')->searchable(),
+                BadgeColumn::make('status')->colors(['success' => 'Active', 'danger' => 'Inactive', 'warning' => 'Maintenance']),
+                TextColumn::make('link_speed')->label('Speed (Mbps)')->sortable(),
+                TextColumn::make('ownership')->searchable(),
+                TextColumn::make('officeA.name')->label('From Office')->searchable(),
+                TextColumn::make('officeB.name')->label('To Office')->searchable(),
             ])
             ->filters([
-                SelectFilter::make('link_type')
-                    ->options([
-                        'P2P Radio Link' => 'P2P Radio Link',
-                        'Site-to-Site VPN' => 'Site-to-Site VPN',
-                        'MPLS' => 'MPLS',
-                        'Other' => 'Other',
-                    ]),
-                SelectFilter::make('status')
-                    ->options([
-                        'Active' => 'Active',
-                        'Inactive' => 'Inactive',
-                        'Maintenance' => 'Maintenance',
-                    ]),
+                SelectFilter::make('link_type')->options([
+                    'P2P Radio Link' => 'P2P Radio Link',
+                    'Fiber Optic Link' => 'Fiber Optic Link',
+                    'Site-to-Site VPN' => 'Site-to-Site VPN',
+                    'MPLS' => 'MPLS',
+                    'Other' => 'Other',
+                ]),
+                SelectFilter::make('status')->options(['Active' => 'Active', 'Inactive' => 'Inactive', 'Maintenance' => 'Maintenance']),
+                SelectFilter::make('ownership')->options(['Owned' => 'Owned', 'Rented' => 'Rented']),
                 SelectFilter::make('officeA')->relationship('officeA', 'name')->label('From Office'),
                 SelectFilter::make('officeB')->relationship('officeB', 'name')->label('To Office'),
             ])

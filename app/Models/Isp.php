@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,7 @@ class Isp extends Model
         'connection_type',
         'location',
         'static_ip',
+        'firewall_ip',
         'status',
         'management_url',
         'username',
@@ -53,5 +55,16 @@ class Isp extends Model
     public function office(): BelongsTo
     {
         return $this->belongsTo(Office::class);
+    }
+
+    /**
+     * Interact with the static_ip attribute.
+     */
+    protected function staticIp(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => json_decode($value, true) ?: [],
+            set: fn ($value) => json_encode($value),
+        );
     }
 }

@@ -19,9 +19,9 @@ class OfficeResource extends Resource
 {
     protected static ?string $model = Office::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?string $navigationGroup = 'Locations';
 
     public static function form(Form $form): Form
     {
@@ -30,6 +30,10 @@ class OfficeResource extends Resource
                 Forms\Components\Section::make('Office Details')
                     ->description('Enter the details of the office.')
                     ->schema([
+                        Forms\Components\Select::make('site_id')
+                            ->relationship('site', 'name')
+                            ->required()
+                            ->prefixIcon('heroicon-o-building-office-2'),
                         Forms\Components\TextInput::make('name')
                             ->prefixIcon('heroicon-o-building-office')
                             ->required()
@@ -38,11 +42,12 @@ class OfficeResource extends Resource
                             ->relationship('city', 'name')
                             ->required()
                             ->prefixIcon('heroicon-o-map-pin'),
-                        Forms\Components\Textarea::make('address')
-                            ->required()
-                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('contact_person')
                             ->prefixIcon('heroicon-o-user'),
+                        Forms\Components\Textarea::make('address')
+                            ->label('Office Number / Floor')
+                            ->placeholder('e.g., Office # 201, 2nd Floor')
+                            ->columnSpanFull(),
                     ])->columns(2),
                 Forms\Components\Hidden::make('created_by')
                     ->default(Auth::id()),
@@ -57,6 +62,9 @@ class OfficeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('site.name')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('city.name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('contact_person')

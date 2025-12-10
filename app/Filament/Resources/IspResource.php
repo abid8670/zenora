@@ -4,8 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\IspResource\Pages;
 use App\Models\Isp;
-use App\Models\Office;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -18,6 +18,7 @@ use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class IspResource extends Resource
 {
@@ -35,21 +36,40 @@ class IspResource extends Resource
                         ->icon('heroicon-o-signal')
                         ->schema([
                             Section::make()
-                                ->columns(3)
+                                ->columns(2)
                                 ->schema([
                                     Select::make('office_id')
-                                        ->label('Office Location')
-                                        ->options(Office::all()->pluck('name', 'id'))
+                                        ->relationship('office', 'name', fn (Builder $query) => $query->with('site'))
+                                        ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name}" . ($record->site ? " ({$record->site->name})" : ''))
+                                        ->prefixIcon('heroicon-o-building-office-2')
                                         ->searchable()
-                                        ->required(),
+                                        ->required()
+                                        ->label('Office Location'),
                                     TextInput::make('name')
                                         ->required()
                                         ->label('Connection Name')
                                         ->placeholder('e.g., Main Office Fiber'),
-                                    TextInput::make('provider')
+                                    Select::make('provider')
+                                        ->options([
+                                            'PTCL' => 'PTCL',
+                                            'StormFiber' => 'StormFiber',
+                                            'Nayatel' => 'Nayatel',
+                                            'Optix' => 'Optix',
+                                            'Cybernet' => 'Cybernet',
+                                            'Wateen' => 'Wateen',
+                                            'Zong 4G' => 'Zong 4G',
+                                            'Jazz 4G' => 'Jazz 4G',
+                                            'Ufone 4G' => 'Ufone 4G',
+                                            'Telenor 4G' => 'Telenor 4G',
+                                            'SCO' => 'SCO',
+                                            'Transworld Home' => 'Transworld Home',
+                                            'Fiberlink' => 'Fiberlink',
+                                            'Satcomm' => 'Satcomm',
+                                            'Connect Communications' => 'Connect Communications',
+                                        ])
+                                        ->searchable()
                                         ->required()
-                                        ->label('ISP Provider')
-                                        ->placeholder('e.g., PTCL, StormFiber'),
+                                        ->label('ISP Provider'),
                                     TextInput::make('speed')
                                         ->required()
                                         ->label('Connection Speed')
@@ -63,17 +83,11 @@ class IspResource extends Resource
                                             'Radio Link' => 'Radio Link',
                                             'Satellite' => 'Satellite',
                                             'Other' => 'Other',
-                                        ])
-                                        ->label('Connection Type'),
+                                        ]),
                                     TextInput::make('location')
                                         ->placeholder('e.g., Server Room, 3rd Floor')
                                         ->columnSpanFull(),
-                                    TextInput::make('static_ip')
-                                        ->label('Static IP Address')
-                                        ->ip()
-                                        ->unique(ignoreRecord: true),
-                                    DatePicker::make('installation_date')
-                                        ->label('Installation Date'),
+                                    DatePicker::make('installation_date'),
                                     Select::make('status')
                                         ->options([
                                             'Active' => 'Active',
@@ -82,6 +96,17 @@ class IspResource extends Resource
                                         ])
                                         ->required()
                                         ->default('Active'),
+                                    TextInput::make('firewall_ip')
+                                        ->label('Firewall IP Address')
+                                        ->prefixIcon('heroicon-o-shield-check')
+                                        ->ip()
+                                        ->columnSpanFull(),
+                                    KeyValue::make('static_ip')
+                                        ->label('Static IP Pool')
+                                        ->keyLabel('Description')
+                                        ->valueLabel('IP Address')
+                                        ->addActionLabel('Add another IP')
+                                        ->columnSpanFull(),
                                 ]),
                         ]),
                     Tabs\Tab::make('Billing & Portal')
@@ -112,6 +137,7 @@ class IspResource extends Resource
                                     TextInput::make('password')
                                         ->label('Password')
                                         ->password()
+                                        ->revealable()
                                         ->autocomplete('new-password'),
                                 ]),
                         ]),
@@ -157,6 +183,8 @@ class IspResource extends Resource
                         'danger' => 'Inactive',
                         'warning' => 'Maintenance',
                     ]),
+                TextColumn::make('firewall_ip')->label('Firewall IP')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('static_ip')->label('Static IPs')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('billing_date')
                     ->date()
                     ->sortable()

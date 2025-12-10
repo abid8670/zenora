@@ -14,6 +14,7 @@ class Office extends Model
     protected $fillable = [
         'name',
         'city_id',
+        'site_id',
         'address',
         'contact_person',
         'created_by',
@@ -33,5 +34,10 @@ class Office extends Model
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
     }
 }

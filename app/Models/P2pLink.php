@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Crypt;
 
 class P2pLink extends Model
 {
@@ -15,20 +14,28 @@ class P2pLink extends Model
         'name',
         'link_type',
         'status',
+        'link_speed',
+        'ownership',
         'office_a_id',
         'office_b_id',
-        'device_url',
-        'username',
-        'password',
-        'vpn_server_ip',
-        'vpn_user',
-        'vpn_password',
+        'device_a_type',
+        'device_a_mode',
+        'device_a_wan_ip',
+        'device_a_url',
+        'device_a_username',
+        'device_a_password',
+        'device_b_type',
+        'device_b_mode',
+        'device_b_wan_ip',
+        'device_b_url',
+        'device_b_username',
+        'device_b_password',
         'remarks',
     ];
 
     protected $casts = [
-        'password' => 'encrypted',
-        'vpn_password' => 'encrypted',
+        'device_a_password' => 'encrypted',
+        'device_b_password' => 'encrypted',
     ];
 
     public function officeA(): BelongsTo

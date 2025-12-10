@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\WifiSsidResource\Pages;
+use App\Models\AccessPoint;
 use App\Models\WifiSsid;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -26,18 +27,53 @@ class WifiSsidResource extends Resource
     {
         return $form
             ->schema([
-                Section::make('Relations')
-                    ->description('Define the office and access point for this SSID.')
+                Section::make('Access Point Assignment')
+                    ->description('Assign this SSID to an existing Access Point.')
                     ->schema([
-                        Forms\Components\Select::make('office_id')
-                            ->relationship('office', 'name')
-                            ->prefixIcon('heroicon-o-building-office-2')
-                            ->required(),
                         Forms\Components\Select::make('access_point_id')
-                            ->relationship('accessPoint', 'name')
                             ->prefixIcon('heroicon-o-wifi')
-                            ->required(),
-                    ])->columns(2),
+                            ->required()
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                $accessPoint = AccessPoint::with(['office.site'])->find($value);
+                                if (!$accessPoint) {
+                                    return null;
+                                }
+                                $label = $accessPoint->name;
+                                if ($accessPoint->office) {
+                                    $label .= " ({$accessPoint->office->name}";
+                                    if ($accessPoint->office->site) {
+                                        $label .= " - {$accessPoint->office->site->name}";
+                                    }
+                                    $label .= ")";
+                                }
+                                return $label;
+                            })
+                            ->getSearchResultsUsing(function (string $search): array {
+                                $accessPoints = AccessPoint::query()
+                                    ->where('name', 'like', "%{$search}%")
+                                    ->orWhereHas('office', function ($query) use ($search) {
+                                        $query->where('name', 'like', "%{$search}%");
+                                    })
+                                    ->orWhereHas('office.site', function ($query) use ($search) {
+                                        $query->where('name', 'like', "%{$search}%");
+                                    })
+                                    ->with(['office.site'])
+                                    ->limit(50)
+                                    ->get();
+
+                                return $accessPoints->mapWithKeys(function ($accessPoint) {
+                                    $label = $accessPoint->name;
+                                    if ($accessPoint->office) {
+                                        $label .= " ({$accessPoint->office->name}";
+                                        if ($accessPoint->office->site) {
+                                            $label .= " - {$accessPoint->office->site->name}";
+                                        }
+                                        $label .= ")";
+                                    }
+                                    return [$accessPoint->id => $label];
+                                })->all();
+                            }),
+                    ]),
                 Section::make('Details')
                     ->description('Provide the SSID name, password, and any relevant notes.')
                     ->schema([
@@ -62,13 +98,19 @@ class WifiSsidResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('ssid')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('office.name')
+                Tables\Columns\TextColumn::make('accessPoint.name')
+                    ->label('Access Point')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('accessPoint.office.name')
+                    ->label('Office')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('accessPoint.office.site.name')
+                    ->label('Site')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -87,6 +129,10 @@ class WifiSsidResource extends Resource
                 ]),
             ])
             ->groups([
+                Group::make('accessPoint.office.site.name')
+                    ->label('Site'),
+                Group::make('accessPoint.office.name')
+                    ->label('Office'),
                 Group::make('accessPoint.name')
                     ->label('Access Point'),
             ]);
