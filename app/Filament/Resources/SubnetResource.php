@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Validation\Rules\Unique;
 
 class SubnetResource extends Resource
 {
@@ -31,7 +32,10 @@ class SubnetResource extends Resource
                             ->label('Subnet Address (CIDR)')
                             ->placeholder('e.g., 192.168.1.0/24')
                             ->prefixIcon('heroicon-o-computer-desktop')
-                            ->required(),
+                            ->required()
+                            ->unique(ignoreRecord: true, modifyRuleUsing: function (Unique $rule, callable $get) {
+                                return $rule->where('office_id', $get('office_id'));
+                            }),
                         Forms\Components\TextInput::make('gateway')
                             ->label('Gateway')
                             ->placeholder('e.g., 192.168.1.1')

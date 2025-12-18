@@ -18,7 +18,7 @@ class CityResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-map';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?string $navigationGroup = 'Locations'; // Changed Group
 
     public static function form(Form $form): Form
     {

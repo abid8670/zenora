@@ -59,7 +59,7 @@ class DomainResource extends Resource
                         ->schema([
                             Section::make('Registrar Details')
                                 ->schema([
-                                    TextInput::make('registrar')->maxLength(255),
+                                    TextInput::make('registrar')->required()->maxLength(255),
                                     TextInput::make('panel_url')->label('Panel URL')->url()->maxLength(255),
                                 ])->columns(2),
                             Section::make('Panel Credentials')

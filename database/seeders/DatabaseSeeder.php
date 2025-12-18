@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
             OfficeSeeder::class,
             AdminUserSeeder::class,
             ServerTypeSeeder::class,
-            SupportTypeSeeder::class, // Registering the new seeder
+            SupportTypeSeeder::class,
+            AssetCategorySeeder::class,
+            DepartmentSeeder::class, // Registering the Department seeder
         ]);
     }
 }

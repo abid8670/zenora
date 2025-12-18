@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SiteResource\Pages;
-use App\Models\Site;
+use App\Filament\Resources\AssetCategoryResource\Pages;
+use App\Models\AssetCategory;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -11,13 +11,13 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class SiteResource extends Resource
+class AssetCategoryResource extends Resource
 {
-    protected static ?string $model = Site::class;
+    protected static ?string $model = AssetCategory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office-2'; // Icon Added
+    protected static ?string $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationGroup = 'Locations';
+    protected static ?string $navigationGroup = 'Inventory';
 
     public static function form(Form $form): Form
     {
@@ -25,6 +25,7 @@ class SiteResource extends Resource
             ->schema([
                 TextInput::make('name')
                     ->required()
+                    ->unique(ignoreRecord: true)
                     ->maxLength(255),
             ]);
     }
@@ -39,16 +40,13 @@ class SiteResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -67,9 +65,9 @@ class SiteResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSites::route('/'),
-            'create' => Pages\CreateSite::route('/create'),
-            'edit' => Pages\EditSite::route('/{record}/edit'),
+            'index' => Pages\ListAssetCategories::route('/'),
+            'create' => Pages\CreateAssetCategory::route('/create'),
+            'edit' => Pages\EditAssetCategory::route('/{record}/edit'),
         ];
     }
 }

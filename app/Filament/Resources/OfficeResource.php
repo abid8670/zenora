@@ -19,7 +19,7 @@ class OfficeResource extends Resource
 {
     protected static ?string $model = Office::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office';
+    protected static ?string $navigationIcon = 'heroicon-o-map-pin'; // Icon Changed
 
     protected static ?string $navigationGroup = 'Locations';
 
@@ -33,7 +33,7 @@ class OfficeResource extends Resource
                         Forms\Components\Select::make('site_id')
                             ->relationship('site', 'name')
                             ->required()
-                            ->prefixIcon('heroicon-o-building-office-2'),
+                            ->prefixIcon('heroicon-o-map'), // Icon Changed
                         Forms\Components\TextInput::make('name')
                             ->prefixIcon('heroicon-o-building-office')
                             ->required()

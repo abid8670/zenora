@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany; // Added this line
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Office extends Model
@@ -39,5 +40,13 @@ class Office extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
+    }
+
+    /**
+     * Get the employees for the office.
+     */
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
     }
 }

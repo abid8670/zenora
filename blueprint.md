@@ -1,82 +1,85 @@
 # Project Blueprint
 
-## 1. Project Overview
+## Overview
 
-This project is a comprehensive IT infrastructure management dashboard built with the Laravel framework and Filament admin panel. It serves as a central hub for managing various network assets, including offices, sites, domains, hosting, servers, ISPs, P2P links, and VoIP extensions. The application is designed to provide a clear and organized view of the entire IT infrastructure, making it easier to track, manage, and audit network resources.
+This project is a full-stack web application built with Laravel and Filament for the admin panel. The application is designed to manage assets, employees, domains, hosting, and projects. The dashboard provides a statistical overview of these resources and tables for actionable insights, organized into logical groups for clarity.
 
-## 2. Implemented Features & Design
+## Implemented Features
 
-This section documents all the features, design choices, and architectural decisions implemented in the application.
+### Employee Management
 
-### Core Architecture
-*   **Framework:** Laravel 12
-*   **Admin Panel:** Filament 3
-*   **Database:** Default Laravel setup (likely MySQL or PostgreSQL)
-*   **Authentication:** Standard Laravel Breeze/Jetstream with Filament integration.
+*   **Password Field:** Added a `password` field to the `Employee` resource.
+    *   The password is required when creating a new employee.
+    *   The password is automatically hashed before being saved to the database.
+    *   The password field is `revealable`, allowing users to see the password they are typing.
+*   **Compact UI:** The employee form has been made more compact by changing the layout from 2 columns to 3 columns.
 
-### Modules & Resources
+### Domain Management
 
-#### Sites Management
-*   **Purpose:** Manages physical locations or data centers where offices are located.
-*   **Fields:** Site Name, Status (Active, Inactive).
-*   **Relationship:** A Site can have multiple Offices.
+*   **Balanced UI:** The domain form layout has been reverted to a 2-column layout to ensure a balanced and clean user interface without empty spaces.
 
-#### Offices Management
-*   **Purpose:** Manages individual office branches.
-*   **Fields:** Office Name, Site (linked via `site_id`), Status.
-*   **Relationship:** An Office belongs to a Site.
+### Access Point Management
 
-#### ISP Management
-*   **Purpose:** Manages Internet Service Provider (ISP) connections for each office.
-*   **Key Features:** Office dropdown shows site for clarity, dynamic IP fields, encrypted credentials.
+*   **Revealable Passwords:** The password fields in the "Management" tab and the "Associated SSIDs" repeater are now revealable.
 
-#### P2P Links Management
-*   **Purpose:** Manages Point-to-Point (P2P) radio links, VPNs, or other direct connections between offices.
-*   **Key Features:** Detailed tabs for Device A and Device B, endpoint-specific configurations (type, mode, IP, URL, credentials), enhanced office selection, encrypted passwords.
+### Subnet Management
 
-#### VoIP Extensions Management
-*   **Purpose:** Manages VoIP phone extensions across all offices.
-*   **Fields:** Extension Number (unique), Assigned User, Display Name, Office Location, Status, Remarks.
-*   **Key Features:**
-    *   **Flexible Assignment:** An extension can be assigned to either a system user (from a dropdown) or a custom display name (e.g., "Conference Room"). The form validates that at least one is provided.
-    *   **Smart Identity Column:** The table view displays the user's name if available; otherwise, it shows the custom display name.
-    *   **Unique Extension Numbers:** The system validates that each extension number is unique.
-    *   **User & Office Linking:** Each extension can be linked to a specific user and an office.
-    *   **Enhanced Office Selection:** The office dropdown shows the site name for better context.
-    *   **Comprehensive Filtering:** The list view can be filtered by status, office, and site.
+*   **Scoped Unique Validation:** The `subnet_address` validation is now scoped to the `office_id`, allowing the same subnet address to be used in different offices, but preventing duplicates within the same office.
 
-### Design & UI/UX
-*   **Theme:** Default Filament theme.
-*   **Layout:** Clean, tab-based forms for complex resources and simple, two-column layouts for others.
-*   **Navigation:** Resources are logically grouped under the "Network" navigation item in the sidebar.
-*   **Clarity:** Custom labels and relationship-based option labels are used extensively to provide context and prevent user error.
+### Dashboard Widgets
 
-## 3. Current Task: VoIP Extension Resource Refinement (Completed)
+*   **Assets & Employees Group:**
+    *   **Stats Overview:** Displays key statistics about assets and employees (Total Assets, Total Employees, In Stock, Assigned).
+    *   **Filters:** Allows filtering stats by office and asset category.
 
-This section outlines the plan and steps that were taken to fulfill the most recent user request.
+*   **Domain Management Group:**
+    *   **Stats Overview:** Displays key statistics about domains (Total, Active, Expiring Soon, Expired).
+    *   **Expiring Domains Table:** Lists domains expiring within 7 days. Includes a "Renew" action that opens a form with a date picker to set a new expiry date. Displays the correct number of days remaining.
 
-### A. User Request
+*   **Hosting Management Group:**
+    *   **Stats Overview:** Displays key statistics about hosting accounts (Total, Active, Expiring Soon, Expired).
+    *   **Expiring Hostings Table:** Lists hosting accounts expiring within 7 days. Includes a "Renew" action that opens a form with a date picker to set a new expiry date. Displays the correct number of days remaining.
 
-The user requested a refinement of the VoIP Extension resource. The requirement was to allow an extension to be associated with either a system user or a custom, manually-typed name (like "Reception"), instead of forcing a selection from the user model.
+*   **Project Management Group:**
+    *   **Recent Projects Table:** Displays the 5 most recent projects.
 
-### B. Execution Plan & Steps Taken
+### Form Validations
 
-The request was successfully implemented through the following steps:
+*   **Domain Form:** The `registrar` field is now a required field to prevent database errors.
 
-1.  **Filament Resource Update (`VoipExtensionResource.php`):**
-    *   **Form Logic:**
-        *   The `user_id` `Select` field was made optional.
-        *   The `display_name` `TextInput` field was also made optional.
-        *   The `requiredWithout` validation rule was applied to both fields. This masterfully ensures that the form can only be submitted if *at least one* of the two fields is filled, providing maximum flexibility while maintaining data integrity.
-    *   **Table View Logic:**
-        *   The individual `user.name` and `display_name` columns were removed.
-        *   A new, custom `TextColumn` named `identity` was created.
-        *   Using `formatStateUsing`, this column was configured to intelligently display the user's name if one is linked, otherwise fallback to showing the `display_name`. This creates a clean and consolidated "Assigned To" column.
-        *   The `searchable()` method for this column was configured to search in both the `user.name` and `display_name` fields.
+### Code Modifications
 
-2.  **Blueprint Update:**
-    *   The `blueprint.md` file was updated to reflect this new, more flexible implementation of the VoIP Extension module.
+*   **`database/migrations`:** Created a new migration to add the `password` column to the `employees` table. The `subnets` table migration already had the correct composite unique key for `subnet_address` and `office_id`.
+*   **`app/Filament/Resources/EmployeeResource.php`:**
+    *   Added a `password` `TextInput` to the form.
+    *   Made the password field required on create, and optional on edit.
+    *   Added the `dehydrateStateUsing` method to hash the password before saving.
+    *   Added the `revealable` method to the password field.
+    *   Changed the form layout to 3 columns for a more compact UI.
+*   **`app/Filament/Resources/DomainResource.php`:**
+    *   Made the `registrar` field mandatory to fix the `NOT NULL` constraint violation.
+    *   Reverted the form layout to 2 columns for a more balanced UI.
+*   **`app/Filament/Resources/AccessPointResource.php`:**
+    *   Added `->revealable()` to the password field in the "Management" tab.
+    *   Added `->revealable()` to the password field within the "Associated SSIDs" repeater.
+*   **`app/Filament/Resources/SubnetResource.php`:**
+    *   Added a `unique()` validation rule to the `subnet_address` field, scoped to the `office_id`.
+    *   Corrected a `TypeError` by changing the type hint in the validation closure from `Rule` to `Unique`.
+*   **`app/Filament/Widgets/ExpiringDomains.php`:** Updated the "Renew" action to use a `DatePicker` form and corrected the calculation for the "Days to Expire" column.
+*   **`app/Filament/Widgets/ExpiringHostings.php`:** Updated the "Renew" action to use a `DatePicker` form and corrected the calculation for the "Days to Expire" column.
+*   **`app/Providers/Filament/ZenoraPanelProvider.php`:** Registered the `ExpiringDomains` and `ExpiringHostings` widgets.
 
-### C. Summary of Changes
+## Current Request
 
-The VoIP Extension resource is now significantly more flexible. It correctly models the real-world scenario where a phone extension might not belong to a specific system user but to a location or a non-system person. The UI remains clean, and the validation ensures that essential assignment information is never left blank.
+### Request
+
+The user reported a `TypeError` in the `SubnetResource` when trying to create a new subnet. The error indicated an incorrect type hint in the `unique` validation rule's closure.
+
+### Steps Taken
+
+1.  **Analyze Error:** Examined the stack trace and identified the root cause: the closure for `modifyRuleUsing` was type-hinting `Illuminate\Validation\Rule` instead of the correct `Illuminate\Validation\Rules\Unique`.
+2.  **Fix Type Hint:**
+    *   Modified `app/Filament/Resources/SubnetResource.php`.
+    *   Corrected the type hint in the closure from `Rule` to `Unique`.
+3.  **Update `blueprint.md`:** Documented the bug fix, explaining the cause and the resolution.
+4.  **Notified the User:** Confirmed that the `TypeError` has been resolved.

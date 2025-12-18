@@ -2,6 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\AssetEmployeeStatsOverview;
+use App\Filament\Widgets\DomainStatsOverview;
+use App\Filament\Widgets\ExpiringDomains;
+use App\Filament\Widgets\ExpiringHostings;
+use App\Filament\Widgets\HostingStatsOverview;
+use App\Filament\Widgets\RecentProjects;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -33,8 +39,12 @@ class ZenoraPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class, //This has been removed
+                AssetEmployeeStatsOverview::class,
+                DomainStatsOverview::class,
+                ExpiringDomains::class,
+                HostingStatsOverview::class,
+                ExpiringHostings::class,
+                RecentProjects::class,
             ])
             ->middleware([
                 EncryptCookies::class,
