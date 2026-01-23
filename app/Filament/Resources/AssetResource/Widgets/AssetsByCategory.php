@@ -4,8 +4,7 @@ namespace App\Filament\Resources\AssetResource\Widgets;
 
 use App\Models\Asset;
 use Filament\Widgets\ChartWidget;
-use Flowframe\Trend\Trend;
-use Flowframe\Trend\TrendValue;
+use Illuminate\Support\Facades\DB;
 
 class AssetsByCategory extends ChartWidget
 {
@@ -15,9 +14,9 @@ class AssetsByCategory extends ChartWidget
     {
         $data = Asset::query()
             ->join('asset_categories', 'assets.asset_category_id', '=', 'asset_categories.id')
-            ->select('asset_categories.name', \DB::raw('count(*) as count'))
-            ->groupBy('asset_categories.name')
-            ->get();
+            ->select('asset_categories.name', DB::raw('count(*) as count'))
+            ->groupBy('asset_categories.name')->get();
+
 
         return [
             'datasets' => [
@@ -40,6 +39,27 @@ class AssetsByCategory extends ChartWidget
 
     protected function getType(): string
     {
-        return 'doughnut';
+        return 'bar';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'display' => false,
+                ],
+                'datalabels' => [
+                    'anchor' => 'end',
+                    'align' => 'top',
+                    'formatter' => fn ($value) => $value,
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                ],
+            ],
+        ];
     }
 }

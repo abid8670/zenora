@@ -79,7 +79,7 @@
             <div><strong>Name:</strong> {{ $employee->name }}</div>
             <div><strong>Employee ID:</strong> {{ $employee->employee_id }}</div>
             <div><strong>Designation:</strong> {{ $employee->designation }}</div>
-            <div><strong>Department:</strong> {{ $employee->department }}</div>
+            <div><strong>Department:</strong> {{ $employee->department->name }}</div>
             <div><strong>Office:</strong> {{ $employee->office->name }}</div>
         </div>
     </div>
@@ -88,7 +88,7 @@
     <div>
         <h2 class="text-xl font-semibold border-b pb-2 mb-4 dark:text-white dark:border-gray-600">Currently Assigned Assets</h2>
         @php
-            $currentAssets = $employee->assetAssignmentLogs->whereNull('returned_date');
+            $currentAssets = $employee->assetAssignmentLogs->whereNull('unassigned_date');
         @endphp
 
         @if($currentAssets->count() > 0)

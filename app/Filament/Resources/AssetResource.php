@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AssetResource\Pages;
 use App\Filament\Resources\AssetResource\RelationManagers\AssetAssignmentLogsRelationManager;
+use App\Filament\Resources\AssetResource\RelationManagers\RepairsRelationManager;
 use App\Models\Asset;
 use App\Models\AssetAssignmentLog;
+use App\Models\AssetRepair;
 use App\Models\Employee;
 use App\Models\Office;
 use Filament\Forms\Components\DatePicker;
@@ -65,7 +67,7 @@ class AssetResource extends Resource
                 ])->columns(2),
 
             Section::make('Purchase and Location')
-                ->description("Information about the asset\'s purchase and location.")
+                ->description("Information about the asset's purchase and location.")
                 ->schema([
                     DatePicker::make('purchase_date')
                         ->prefixIcon('heroicon-o-calendar-days'),
@@ -111,11 +113,8 @@ class AssetResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->searchable(),
+                TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('assetCategory.name')->label('Category')->sortable(),
-                TextColumn::make('site.name')->sortable()->searchable(),
-                TextColumn::make('office.name')->sortable(),
-                TextColumn::make('serial_number')->searchable(),
                 TextColumn::make('status')->searchable()->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'In Stock' => 'success',
@@ -124,10 +123,16 @@ class AssetResource extends Resource
                         'Lost', 'Retired' => 'danger',
                         default => 'gray',
                     }),
+                TextColumn::make('currentAssignment.employee.name')
+                    ->label('Assigned To')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('serial_number')->searchable(),
+                TextColumn::make('site.name')->sortable()->searchable(),
+                TextColumn::make('office.name')->sortable(),
                 TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('site')->relationship('site', 'name'),
                 SelectFilter::make('status')
                     ->options([
                         'In Stock' => 'In Stock',
@@ -140,6 +145,7 @@ class AssetResource extends Resource
                 SelectFilter::make('assetCategory')
                     ->relationship('assetCategory', 'name')
                     ->label('Category'),
+                SelectFilter::make('site')->relationship('site', 'name'),
                 SelectFilter::make('office')
                     ->relationship('office', 'name')
                     ->label('Office'),
@@ -168,14 +174,48 @@ class AssetResource extends Resource
                             'assigned_date' => $data['assigned_date'],
                             'notes' => $data['notes'],
                         ]);
+
                         $record->status = 'Assigned';
                         $record->save();
+
                         Notification::make()
                             ->title('Asset assigned successfully')
                             ->success()
                             ->send();
                     })
                     ->visible(fn (Asset $record): bool => $record->status === 'In Stock'),
+
+                Action::make('markAsRepaired')
+                    ->label('Mark as Repaired')
+                    ->icon('heroicon-o-wrench-screwdriver')
+                    ->form([
+                        DatePicker::make('repair_date')
+                            ->label('Repair Date')
+                            ->default(now())
+                            ->required(),
+                        TextInput::make('cost')
+                            ->numeric()
+                            ->prefix('PKR'),
+                        Textarea::make('notes')
+                            ->label('Repair Notes'),
+                    ])
+                    ->action(function (Asset $record, array $data) {
+                        AssetRepair::create([
+                            'asset_id' => $record->id,
+                            'repair_date' => $data['repair_date'],
+                            'cost' => $data['cost'],
+                            'notes' => $data['notes'],
+                        ]);
+
+                        $record->status = 'In Stock';
+                        $record->save();
+
+                        Notification::make()
+                            ->title('Asset repaired successfully')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Asset $record): bool => $record->status === 'Damaged'),
 
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -191,6 +231,7 @@ class AssetResource extends Resource
     {
         return [
             AssetAssignmentLogsRelationManager::class,
+            RepairsRelationManager::class,
         ];
     }
 

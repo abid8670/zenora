@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Office;
 use App\Models\SupportTicket;
 use App\Models\SupportType;
+use App\Models\User;
+use App\Notifications\NewSupportTicketNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class SupportTicketController extends Controller
 {
@@ -39,6 +42,10 @@ class SupportTicketController extends Controller
         $ticket->status = 'New';
         $ticket->local_ip = $request->ip();
         $ticket->save();
+
+        // Notify all users
+        $users = User::all();
+        Notification::send($users, new NewSupportTicketNotification($ticket));
 
         return redirect()->route('support-ticket.create')->with('success', 'Your support ticket has been submitted successfully! Ticket ID: ' . $ticket->id);
     }

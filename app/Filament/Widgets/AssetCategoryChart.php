@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Asset;
 use App\Models\AssetCategory;
 use Filament\Widgets\ChartWidget;
 
@@ -11,6 +10,10 @@ class AssetCategoryChart extends ChartWidget
     protected static ?string $heading = 'Assets by Category';
 
     protected static ?string $maxHeight = '300px';
+
+    protected int | string | array $columnSpan = 'full';
+
+    protected static ?int $sort = 2;
 
     protected function getData(): array
     {

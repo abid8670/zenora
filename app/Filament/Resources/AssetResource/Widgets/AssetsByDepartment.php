@@ -13,7 +13,9 @@ class AssetsByDepartment extends ChartWidget
     {
         $data = AssetAssignmentLog::with('employee.department')
             ->get()
-            ->groupBy('employee.department.name')
+            ->groupBy(function ($log) {
+                return $log->employee?->department?->name ?? 'No Department';
+            })
             ->map(fn ($row) => $row->count());
 
         return [
@@ -37,6 +39,27 @@ class AssetsByDepartment extends ChartWidget
 
     protected function getType(): string
     {
-        return 'pie';
+        return 'bar';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'display' => false,
+                ],
+                'datalabels' => [
+                    'anchor' => 'end',
+                    'align' => 'top',
+                    'formatter' => fn ($value) => $value,
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                ],
+            ],
+        ];
     }
 }
