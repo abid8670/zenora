@@ -1,59 +1,204 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Zenora — IT Operations & Asset Management Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Zenora is the single source of truth for an entire group of companies' IT estate.**
 
-## About Laravel
+It tracks every asset from purchase to disposal, every credential, every IP address and subnet,
+every Wi-Fi SSID, every point-to-point link and every server — organised by office and site, with
+expiry alerts so nothing lapses unnoticed.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Built with **Laravel 12 + Filament 3.3**.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## The problem it solves
 
-## Learning Laravel
+Spreadsheets are fine until you have more than one office. Then you cannot answer basic questions:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- Which laptop is assigned to whom, and since when?
+- Which domains or hosting accounts expire this week?
+- Which subnet and gateway belong to the Lahore office?
+- What is the Wi-Fi password for Site 3, and who has changed it?
+- Which server is running which service, and where is it physically?
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Zenora answers all of these from one dashboard, and keeps a history of every change.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Feature overview
 
-### Premium Partners
+### 🏢 Organisation structure
+| Model | Purpose |
+|-------|---------|
+| `Office` | Physical offices, the top-level scope for networks and assets |
+| `Site` | Sub-locations inside an office |
+| `City` | Geography for offices and sites |
+| `Department` | Organisational units for employees |
+| `Employee` | Staff records, links to assigned assets |
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 💻 Asset lifecycle management
+| Model | Purpose |
+|-------|---------|
+| `Asset` | The asset register — hardware, with its full attribute set |
+| `AssetCategory` | Categories used for filtering and reporting |
+| `AssetAssignmentLog` | **Immutable history** of who held which asset, and when |
+| `AssetRepair` | Repair/maintenance records against an asset, with cost and status |
 
-## Contributing
+Assets can be **In Stock** or **Assigned**, and the dashboard reports both counts live.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 🌐 Network inventory
+| Model | Purpose |
+|-------|---------|
+| `Subnet` | Subnet allocation, gateway and VLAN, scoped per office |
+| `Isp` | Internet service providers with link details |
+| `P2pLink` | Point-to-point links between offices/sites |
+| `AccessPoint` | Wireless access points and their management credentials |
+| `WifiSsid` | SSIDs, with their passwords held against each access point |
+| `VoipExtension` | PBX extensions and their assignments |
 
-## Code of Conduct
+### 🖥️ Infrastructure
+| Model | Purpose |
+|-------|---------|
+| `Server` | Physical and virtual servers |
+| `ServerType` | Server role/type taxonomy |
+| `Hosting` | Hosting accounts, with provider and renewal tracking |
+| `Domain` | Domain names, with registrar and expiry tracking |
+| `Project` | Projects, with their owner and status |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 🎫 Support
+| Model | Purpose |
+|-------|---------|
+| `SupportTicket` | Tickets raised against people or infrastructure |
+| `SupportType` | Ticket categories |
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Dashboard
+
+The Filament dashboard is grouped into logical panels:
+
+**Assets & Employees**
+- Stats overview — Total Assets, Total Employees, In Stock, Assigned
+- Filterable by office and asset category
+- Asset category distribution chart
+
+**Domain Management**
+- Stats overview — Total, Active, Expiring Soon, Expired
+- **Expiring Domains** table — anything expiring within 7 days, with a one-click **Renew** action
+  (date picker) and a live "days to expire" column
+
+**Hosting Management**
+- Stats overview — Total, Active, Expiring Soon, Expired
+- **Expiring Hostings** table — same renew workflow
+
+**Project Management**
+- Recent projects table
+
+Widgets live in `app/Filament/Widgets/`:
+`AssetEmployeeStatsOverview`, `AssetCategoryChart`, `DomainStatsOverview`,
+`ExpiringDomains`, `ExpiringHostings`.
+
+---
+
+## Notable implementation details
+
+- **Scoped unique validation.** `subnet_address` is unique *per office*, not globally — the same
+  subnet can exist in two offices but never twice in one:
+  `unique(ignoreRecord: true)->where('office_id', $officeId)`.
+- **Password handling.** Credentials stored for employees, access points and repeaters are
+  hashed on save via `dehydrateStateUsing()`, and every password field is `->revealable()` so
+  operators can verify what they typed.
+- **Renewal actions** use a `DatePicker` inside a Filament table action, recalculating the
+  expiry from the new date rather than requiring a full edit form.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Laravel 12 (PHP 8.2+) |
+| Admin panel | Filament 3.3 |
+| Frontend | Blade + Vite |
+| Database | MySQL |
+| Packaging | Docker / docker-compose |
+| Deployment | Vercel (PHP functions) |
+
+---
+
+## Data model
+
+23 Eloquent models, 46 migrations, 21 Filament resources.
+
+Seeders provide a usable starting state — admin user, asset categories, cities, departments,
+offices, projects, server types and support types.
+
+---
+
+## Getting started
+
+```bash
+# 1. install dependencies
+composer install
+npm install
+
+# 2. configure
+cp .env.example .env
+php artisan key:generate
+# set DB_* in .env
+
+# 3. migrate and seed
+php artisan migrate --seed
+
+# 4. build and serve
+npm run build
+php artisan serve
+```
+
+The Filament admin panel is then available at `/admin`.
+
+### Docker
+
+```bash
+docker-compose up -d
+```
+
+---
+
+## Repository layout
+
+```
+app/
+  Filament/
+    Resources/     # 21 resources: Assets, Employees, Domains, Subnets, SSIDs, ...
+    Widgets/       # dashboard stats + expiry tables
+  Models/          # 23 Eloquent models
+database/
+  migrations/      # 46 migrations
+  seeders/         # baseline data
+routes/
+  web.php
+  console.php
+```
+
+---
+
+## Roadmap
+
+- [ ] Role-based permissions (Filament Shield)
+- [ ] Asset depreciation tracking
+- [ ] QR/barcode labels for physical asset tagging
+- [ ] Licence and warranty expiry alerts
+- [ ] API for external monitoring systems to push link status
+- [ ] PDF export of asset assignments for audits
+
+---
+
+## Screenshots
+
+> Add screenshots of the dashboard, asset register and network inventory here.
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proprietary — internal platform for the Blue Group of Companies. Not licensed for redistribution.
